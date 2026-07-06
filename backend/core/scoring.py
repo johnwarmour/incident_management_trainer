@@ -29,7 +29,7 @@ def build_debrief(state: SessionState, overall_feedback: str) -> DebriefReport:
     """Aggregate all checkpoint scores into a final debrief report."""
     scores = state.scores
     total = sum(s.score for s in scores)
-    overall = total // max(len(scores), 1)
+    overall = round(total / max(len(scores), 1))
 
     return DebriefReport(
         session_id=state.session_id,
