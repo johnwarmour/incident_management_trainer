@@ -9,11 +9,13 @@ from ..models.schemas import (
     Checkpoint,
     ChatMessage,
     CheckpointScore,
+    Impact,
     IncidentTicket,
     Priority,
     Role,
     SessionState,
     TriageData,
+    Urgency,
 )
 
 
@@ -83,24 +85,18 @@ def extract_ticket_updates_from_text(text: str) -> dict[str, Any]:
 
     # Impact
     if "high impact" in lower or "impact: high" in lower:
-        from ..models.schemas import Impact
         updates["impact"] = Impact.HIGH
     elif "medium impact" in lower or "impact: medium" in lower:
-        from ..models.schemas import Impact
         updates["impact"] = Impact.MEDIUM
     elif "low impact" in lower or "impact: low" in lower:
-        from ..models.schemas import Impact
         updates["impact"] = Impact.LOW
 
     # Urgency
     if "high urgency" in lower or "urgency: high" in lower:
-        from ..models.schemas import Urgency
         updates["urgency"] = Urgency.HIGH
     elif "medium urgency" in lower or "urgency: medium" in lower:
-        from ..models.schemas import Urgency
         updates["urgency"] = Urgency.MEDIUM
     elif "low urgency" in lower or "urgency: low" in lower:
-        from ..models.schemas import Urgency
         updates["urgency"] = Urgency.LOW
 
     # Closure
