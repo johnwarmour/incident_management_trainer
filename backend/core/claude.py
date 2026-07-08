@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
@@ -94,6 +95,14 @@ CHECKPOINT_GUIDANCE: dict[Checkpoint, str] = {
 }
 
 
+def _parse_json_response(text: str) -> dict:
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1]
+        text = text.rsplit("```", 1)[0]
+    return json.loads(text)
+
+
 class ClaudeClient:
     """Manages Claude API calls for a simulation session with prompt caching."""
 
@@ -140,13 +149,7 @@ Return ONLY valid JSON, no markdown fences."""
             messages=[{"role": "user", "content": prompt}],
         )
 
-        import json
-        text = response.content[0].text.strip()
-        # Strip markdown fences if model added them anyway
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1]
-            text = text.rsplit("```", 1)[0]
-        return json.loads(text)
+        return _parse_json_response(response.content[0].text)
 
     def chat(self, state: SessionState, user_message: str) -> str:
         """
@@ -282,12 +285,7 @@ Return ONLY valid JSON."""
             messages=[{"role": "user", "content": prompt}],
         )
 
-        import json
-        text = response.content[0].text.strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1]
-            text = text.rsplit("```", 1)[0]
-        return json.loads(text)
+        return _parse_json_response(response.content[0].text)
 
     def generate_debrief(self, state: SessionState) -> str:
         """Generate overall debrief summary after session completion."""
