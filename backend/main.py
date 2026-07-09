@@ -23,6 +23,8 @@ from .core import (
     get_template,
     pick_scenario_type,
 )
+from .core.scenario import SCENARIO_TEMPLATES
+from .core.session import apply_ticket_updates
 from .models.schemas import (
     AdvanceCheckpointRequest,
     DebriefReport,
@@ -117,7 +119,6 @@ async def session_input(session_id: str, req: UserInputRequest) -> UserInputResp
     # Apply any ticket updates heuristically detected from the user message
     updates = extract_ticket_updates_from_text(req.message)
     if updates:
-        from .core.session import apply_ticket_updates
         apply_ticket_updates(state, updates)
 
     # Get Claude response
@@ -231,7 +232,6 @@ async def get_debrief(session_id: str) -> DebriefReport:
 @app.get("/scenarios")
 async def list_scenarios() -> dict:
     """List available scenario types."""
-    from .core.scenario import SCENARIO_TEMPLATES
     return {
         "scenarios": [
             {"type": k, "description": v["description"]}
