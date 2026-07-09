@@ -7,6 +7,7 @@ Run with: python -m tui.app
 
 from __future__ import annotations
 
+import asyncio
 import sys
 import os
 
@@ -261,7 +262,7 @@ class IncidentSimApp(App):
         try:
             scenario_type = pick_scenario_type(scenario_type)
             template = get_template(scenario_type)
-            scenario_ctx = self._claude.generate_scenario(scenario_type, template)
+            scenario_ctx = await asyncio.to_thread(self._claude.generate_scenario, scenario_type, template)
 
             state = SessionState(
                 scenario_type=scenario_type,
@@ -287,7 +288,7 @@ class IncidentSimApp(App):
                 f"Alert received: {scenario_ctx.get('alert_text', 'Critical alert triggered.')}\n\n"
                 f"Introduce yourself as the monitoring system and present the initial alert."
             )
-            assistant_opening = self._claude.chat(state, opening_prompt)
+            assistant_opening = await asyncio.to_thread(self._claude.chat, state, opening_prompt)
             add_message(state, Role.ASSISTANT, assistant_opening)
 
             log.clear()
@@ -326,7 +327,7 @@ class IncidentSimApp(App):
             apply_ticket_updates(self._state, updates)
 
         try:
-            assistant_msg = self._claude.chat(self._state, message)
+            assistant_msg = await asyncio.to_thread(self._claude.chat, self._state, message)
             add_message(self._state, Role.ASSISTANT, assistant_msg)
             log.write(f"\n[cyan]SYSTEM:[/cyan] {assistant_msg}")
 
@@ -338,7 +339,8 @@ class IncidentSimApp(App):
 
             if detect_checkpoint_complete_signal(assistant_msg):
                 cp_conv = get_checkpoint_conversation(self._state, self._state.current_checkpoint)
-                raw_eval = self._claude.evaluate_checkpoint(
+                raw_eval = await asyncio.to_thread(
+                    self._claude.evaluate_checkpoint,
                     self._state, self._state.current_checkpoint, cp_conv
                 )
                 score = build_checkpoint_score(self._state.current_checkpoint, raw_eval)
@@ -358,7 +360,7 @@ class IncidentSimApp(App):
                     pass
 
                 if session_done:
-                    overall_feedback = self._claude.generate_debrief(self._state)
+                    overall_feedback = await asyncio.to_thread(self._claude.generate_debrief, self._state)
                     log.write("\n[bold yellow]═══ SESSION COMPLETE ═══[/bold yellow]")
                     log.write(f"\nOverall score: [bold]{sum(s.score for s in self._state.scores) // len(self._state.scores)}/100[/bold]")
                     log.write(f"\n{overall_feedback}")
@@ -383,7 +385,8 @@ class IncidentSimApp(App):
         self._loading = True
         try:
             cp_conv = get_checkpoint_conversation(self._state, self._state.current_checkpoint)
-            raw_eval = self._claude.evaluate_checkpoint(
+            raw_eval = await asyncio.to_thread(
+                self._claude.evaluate_checkpoint,
                 self._state, self._state.current_checkpoint, cp_conv
             )
             score = build_checkpoint_score(self._state.current_checkpoint, raw_eval)
@@ -398,7 +401,7 @@ class IncidentSimApp(App):
                 pass
 
             if session_done:
-                overall_feedback = self._claude.generate_debrief(self._state)
+                overall_feedback = await asyncio.to_thread(self._claude.generate_debrief, self._state)
                 log.write("\n[bold yellow]═══ SESSION COMPLETE ═══[/bold yellow]")
                 log.write(f"\n{overall_feedback}")
         except Exception as exc:
